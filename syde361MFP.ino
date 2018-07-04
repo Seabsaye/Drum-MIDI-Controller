@@ -10,7 +10,7 @@ const byte channelPin = A4;
 const byte repeatNotePin = A2;
 
 int currentChannel = 1;
-bool repeat = false;'
+bool repeat = false;
 int repeatTimes = 5;
 
 int velocity = 100;
@@ -29,6 +29,22 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(interruptPin3), outputMIDI3, RISING);
   attachInterrupt(digitalPinToInterrupt(channelPin), changeChannel, RISING);
   attachInterrupt(digitalPinToInterrupt(repeatNotePin), toggleRepeat, RISING);
+}
+
+void sendNote(int midiNote) {
+  usbMIDI.sendNoteOn(midiNote, velocity, currentChannel);
+  delay(100);
+  usbMIDI.sendNoteOff(midiNote, velocity, currentChannel);
+}
+
+void sendRepeatedNote(int midiNote) {
+  int i = 0;
+  while (i < repeatTimes) {
+    usbMIDI.sendNoteOn(midiNote, velocity, currentChannel);
+    delay(100);
+    usbMIDI.sendNoteOff(midiNote, velocity, currentChannel);
+    i++;
+  }
 }
 
 void loop() {
@@ -57,21 +73,6 @@ void loop() {
        sendRepeatedNote(50);
     }
     inputVoltage3 = 0;
-  }
-}
-
-void sendNote(midiNote) {
-  usbMIDI.sendNoteOn(midiNote, velocity, currentChannel);
-  delay(100);
-  usbMIDI.sendNoteOff(midiNote, velocity, currentChannel);
-}
-
-void sendRepeatedNote(midiNote) {
-  i = 0;
-  while (i < repeatTimes) {
-    usbMIDI.sendNoteOn(midiNote, velocity, currentChannel);
-    delay(100);
-    usbMIDI.sendNoteOff(midiNote, velocity, currentChannel);
   }
 }
 
