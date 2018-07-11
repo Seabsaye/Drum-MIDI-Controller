@@ -16,19 +16,15 @@ int repeatTimes = 5;
 int velocity = 100;
 
 void setup() {
-  pinMode(interruptPin1, INPUT_PULLUP);
-  pinMode(interruptPin2, INPUT_PULLUP);
-  pinMode(interruptPin3, INPUT_PULLUP);
   pinMode(channelPin, INPUT_PULLUP);
   pinMode(repeatNotePin, INPUT_PULLUP);
   
   Serial.begin(9600);
   
-  attachInterrupt(digitalPinToInterrupt(interruptPin1), outputMIDI1, RISING);
-  attachInterrupt(digitalPinToInterrupt(interruptPin2), outputMIDI2, RISING);
-  attachInterrupt(digitalPinToInterrupt(interruptPin3), outputMIDI3, RISING);
   attachInterrupt(digitalPinToInterrupt(channelPin), changeChannel, RISING);
   attachInterrupt(digitalPinToInterrupt(repeatNotePin), toggleRepeat, RISING);
+
+  
 }
 
 void sendNote(int midiNote) {
@@ -48,6 +44,10 @@ void sendRepeatedNote(int midiNote) {
 }
 
 void loop() {
+  inputVoltage1 = analogRead(interruptPin1) * 0.0049;
+  inputVoltage2 = analogRead(interruptPin2) * 0.0049;
+  inputVoltage3 = analogRead(interruptPin3) * 0.0049;
+  
   if (inputVoltage1 > 3) {
     if (!repeat) {
        sendNote(40);
@@ -74,18 +74,6 @@ void loop() {
     }
     inputVoltage3 = 0;
   }
-}
-
-void outputMIDI1() {
-  inputVoltage1 = analogRead(interruptPin1) * 0.0049;
-}
-
-void outputMIDI2() {
-  inputVoltage2 = analogRead(interruptPin2) * 0.0049;
-}
-
-void outputMIDI3() {
-  inputVoltage3 = analogRead(interruptPin3) * 0.0049;
 }
 
 void changeChannel() {
