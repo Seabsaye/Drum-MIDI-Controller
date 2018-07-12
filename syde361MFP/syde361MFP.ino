@@ -12,7 +12,7 @@ const byte channelPin = A4;
 const byte effectPin = A2;
 
 int currentChannel = 1;
-int currentEffect = 0;
+int currentEffect[] = {1, 1, 1, 1};
 int repeatTimes = 3;
 
 int velocity = 100;
@@ -48,7 +48,7 @@ void sendRepeatedNote(int midiNote) {
 void loop() {  
   if (note1.update()) {
     if (note1.rose()) {
-      if (currentEffect <= 4) {
+      if (currentEffect[currentChannel] <= 4) {
         usbMIDI.sendNoteOn(40, velocity, currentChannel);
       } else {
         sendRepeatedNote(40);
@@ -60,7 +60,7 @@ void loop() {
 
   if (note2.update()) {
     if (note2.rose()) {
-      if (currentEffect <= 4) {
+      if (currentEffect[currentChannel] <= 4) {
         usbMIDI.sendNoteOn(45, velocity, currentChannel);
       } else {
          sendRepeatedNote(45);
@@ -72,7 +72,7 @@ void loop() {
 
   if (note3.update()) {
     if (note3.rose()) {
-      if (currentEffect <= 4) {
+      if (currentEffect[currentChannel] <= 4) {
         usbMIDI.sendNoteOn(50, velocity, currentChannel);
       } else {
          sendRepeatedNote(50);
@@ -84,26 +84,26 @@ void loop() {
 
   if (effectBounce.update()) {
     if (effectBounce.rose()) {
-      if (currentEffect == 0) {
-        currentEffect = 1;
+      if (currentEffect[currentChannel] == 0) {
+        currentEffect[currentChannel] = 1;
         usbMIDI.sendControlChange(2, 100, currentChannel);
-      } else if (currentEffect == 1) {
-        currentEffect = 2;
+      } else if (currentEffect[currentChannel] == 1) {
+        currentEffect[currentChannel] = 2;
         usbMIDI.sendControlChange(2, 25, currentChannel);
         usbMIDI.sendControlChange(3, 100, currentChannel);
-      } else if (currentEffect == 2) {
-        currentEffect = 3;
+      } else if (currentEffect[currentChannel] == 2) {
+        currentEffect[currentChannel] = 3;
         usbMIDI.sendControlChange(3, 25, currentChannel);
         usbMIDI.sendControlChange(4, 100, currentChannel);
-      } else if (currentEffect == 3) {
-        currentEffect = 4;
+      } else if (currentEffect[currentChannel] == 3) {
+        currentEffect[currentChannel] = 4;
         usbMIDI.sendControlChange(4, 25, currentChannel);
         usbMIDI.sendControlChange(5, 100, currentChannel);
-      } else if (currentEffect == 4){
-        currentEffect = 5;
+      } else if (currentEffect[currentChannel] == 4){
+        currentEffect[currentChannel] = 5;
         usbMIDI.sendControlChange(5, 25, currentChannel);
       } else {
-        currentEffect = 0;
+        currentEffect[currentChannel] = 0;
       }
     }
   }
