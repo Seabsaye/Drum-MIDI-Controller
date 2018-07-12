@@ -8,33 +8,31 @@ const byte interruptPin1 = A8;
 const byte interruptPin2 = A5;
 const byte interruptPin3 = A7;
 
-const byte repeatNotePin  = A2;
-
 const byte channelPin = A4;
+const byte effectPin = A2;
 
 int currentChannel = 1;
-bool repeat = false;
-int repeatTimes = 5;
+int currentEffect = 0;
+int repeatTimes = 3;
 
 int velocity = 100;
 
 Bounce note1 = Bounce(interruptPin1, 10);
 Bounce note2 = Bounce(interruptPin2, 10);
 Bounce note3 = Bounce(interruptPin3, 10);
+Bounce effectBounce = Bounce(effectPin, 10);
 
 Bounce channelCycleBounce = Bounce(channelPin, 10);
 
 void setup() {
   pinMode(channelPin, INPUT_PULLUP);
-  pinMode(repeatNotePin, INPUT_PULLUP);
+  pinMode(effectPin, INPUT_PULLUP);
 
   pinMode(interruptPin1, INPUT_PULLUP);
   pinMode(interruptPin2, INPUT_PULLUP);
   pinMode(interruptPin3, INPUT_PULLUP);
   
   Serial.begin(9600);
-
-  attachInterrupt(digitalPinToInterrupt(repeatNotePin), toggleRepeat, RISING);
 }
 
 void sendRepeatedNote(int midiNote) {
@@ -50,7 +48,7 @@ void sendRepeatedNote(int midiNote) {
 void loop() {  
   if (note1.update()) {
     if (note1.rose()) {
-      if (!repeat) {
+      if (currentEffect <= 4) {
         usbMIDI.sendNoteOn(40, velocity, currentChannel);
       } else {
         sendRepeatedNote(40);
@@ -62,7 +60,7 @@ void loop() {
 
   if (note2.update()) {
     if (note2.rose()) {
-      if (!repeat) {
+      if (currentEffect <= 4) {
         usbMIDI.sendNoteOn(45, velocity, currentChannel);
       } else {
          sendRepeatedNote(45);
@@ -74,7 +72,7 @@ void loop() {
 
   if (note3.update()) {
     if (note3.rose()) {
-      if (!repeat) {
+      if (currentEffect <= 4) {
         usbMIDI.sendNoteOn(50, velocity, currentChannel);
       } else {
          sendRepeatedNote(50);
@@ -84,16 +82,34 @@ void loop() {
     }
   }
 
+  if (effectBounce.update()) {
+    if (effectBounce.rose()) {
+      if (currentEffect == 0) {
+        currentEffect = 1;
+        usbMIDI.sendControlChange(2, 100, currentChannel);
+      } else if (currentEffect == 1) {
+        currentEffect = 2;
+        usbMIDI.sendControlChange(2, 25, currentChannel);
+        usbMIDI.sendControlChange(3, 100, currentChannel);
+      } else if (currentEffect == 2) {
+        currentEffect = 3;
+        usbMIDI.sendControlChange(3, 25, currentChannel);
+        usbMIDI.sendControlChange(4, 100, currentChannel);
+      } else if (currentEffect == 3) {
+        currentEffect = 4;
+        usbMIDI.sendControlChange(4, 25, currentChannel);
+        usbMIDI.sendControlChange(5, 100, currentChannel);
+      } else if (currentEffect == 4){
+        currentEffect = 5;
+        usbMIDI.sendControlChange(5, 25, currentChannel);
+      } else {
+        currentEffect = 0;
+      }
+    }
+  }
+
   if (channelCycleBounce.update() && channelCycleBounce.rose()) {
     (currentChannel < 3) ? currentChannel++ : currentChannel = 1;
-  }
-}
-
-void toggleRepeat() {
-  int repeatPinVoltage = analogRead(repeatNotePin) * 0.0049;
-
-  if (repeatPinVoltage > 3) {
-    repeat = !repeat;
   }
 }
 
