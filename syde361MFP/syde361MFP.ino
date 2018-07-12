@@ -10,6 +10,7 @@ const byte interruptPin3 = A7;
 
 const byte channelPin = A4;
 const byte effectPin = A2;
+const byte clearEffectPin = A1;
 
 int currentChannel = 1;
 int currentEffect[] = {1, 1, 1, 1};
@@ -21,6 +22,7 @@ Bounce note1 = Bounce(interruptPin1, 10);
 Bounce note2 = Bounce(interruptPin2, 10);
 Bounce note3 = Bounce(interruptPin3, 10);
 Bounce effectBounce = Bounce(effectPin, 10);
+Bounce clearEffectBounce = Bounce(clearEffectPin, 10);
 
 Bounce channelCycleBounce = Bounce(channelPin, 10);
 
@@ -82,30 +84,32 @@ void loop() {
     }
   }
 
-  if (effectBounce.update()) {
-    if (effectBounce.rose()) {
-      if (currentEffect[currentChannel] == 0) {
-        currentEffect[currentChannel] = 1;
-        usbMIDI.sendControlChange(2, 100, currentChannel);
-      } else if (currentEffect[currentChannel] == 1) {
-        currentEffect[currentChannel] = 2;
-        usbMIDI.sendControlChange(2, 25, currentChannel);
-        usbMIDI.sendControlChange(3, 100, currentChannel);
-      } else if (currentEffect[currentChannel] == 2) {
-        currentEffect[currentChannel] = 3;
-        usbMIDI.sendControlChange(3, 25, currentChannel);
-        usbMIDI.sendControlChange(4, 100, currentChannel);
-      } else if (currentEffect[currentChannel] == 3) {
-        currentEffect[currentChannel] = 4;
-        usbMIDI.sendControlChange(4, 25, currentChannel);
-        usbMIDI.sendControlChange(5, 100, currentChannel);
-      } else if (currentEffect[currentChannel] == 4){
-        currentEffect[currentChannel] = 5;
-        usbMIDI.sendControlChange(5, 25, currentChannel);
-      } else {
-        currentEffect[currentChannel] = 0;
-      }
+  if (effectBounce.update() && effectBounce.rose()) {
+    if (currentEffect[currentChannel] == 0) {
+      currentEffect[currentChannel] = 1;
+      usbMIDI.sendControlChange(2, 100, currentChannel);
+    } else if (currentEffect[currentChannel] == 1) {
+      currentEffect[currentChannel] = 2;
+      usbMIDI.sendControlChange(2, 25, currentChannel);
+      usbMIDI.sendControlChange(3, 100, currentChannel);
+    } else if (currentEffect[currentChannel] == 2) {
+      currentEffect[currentChannel] = 3;
+      usbMIDI.sendControlChange(3, 25, currentChannel);
+      usbMIDI.sendControlChange(4, 100, currentChannel);
+    } else if (currentEffect[currentChannel] == 3) {
+      currentEffect[currentChannel] = 4;
+      usbMIDI.sendControlChange(4, 25, currentChannel);
+      usbMIDI.sendControlChange(5, 100, currentChannel);
+    } else if (currentEffect[currentChannel] == 4){
+      currentEffect[currentChannel] = 5;
+      usbMIDI.sendControlChange(5, 25, currentChannel);
+    } else {
+      currentEffect[currentChannel] = 0;
     }
+  }
+
+  if (clearEffectBounce.update() && clearEffectBounce.rose()) {
+    currentEffect[currentChannel] = 1;
   }
 
   if (channelCycleBounce.update() && channelCycleBounce.rose()) {
