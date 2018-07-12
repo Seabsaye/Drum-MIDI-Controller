@@ -33,14 +33,6 @@ void setup() {
   pinMode(interruptPin3, INPUT_PULLUP);
   
   Serial.begin(9600);
-  
-  attachInterrupt(digitalPinToInterrupt(channelPin), changeChannel, RISING);
-}
-
-void sendNote(int midiNote) {
-  usbMIDI.sendNoteOn(midiNote, velocity, currentChannel);
-  delay(150);
-  usbMIDI.sendNoteOff(midiNote, velocity, currentChannel);
 }
 
 void sendRepeatedNote(int midiNote) {
@@ -54,41 +46,41 @@ void sendRepeatedNote(int midiNote) {
 }
 
 void loop() {  
-//  if (note1.update()) {
-//    if (note1.rose()) {
-//      if (currentEffect <= 1) {
-//        usbMIDI.sendNoteOn(40, velocity, currentChannel);
-//      } else if (currentEffect == 2) {
-//        sendRepeatedNote(40);
-//      }
-//    } else {
-//      usbMIDI.sendNoteOff(40, velocity, currentChannel);
-//    }
-//  }
+  if (note1.update()) {
+    if (note1.rose()) {
+      if (currentEffect <= 4) {
+        usbMIDI.sendNoteOn(40, velocity, currentChannel);
+      } else {
+        sendRepeatedNote(40);
+      }
+    } else {
+      usbMIDI.sendNoteOff(40, velocity, currentChannel);
+    }
+  }
 
   if (note2.update()) {
     if (note2.rose()) {
       if (currentEffect <= 4) {
         usbMIDI.sendNoteOn(45, velocity, currentChannel);
-      } else if (currentEffect == 5) {
+      } else {
          sendRepeatedNote(45);
       }
     } else {
       usbMIDI.sendNoteOff(45, velocity, currentChannel);
     }
   }
-//
-//  if (note3.update()) {
-//    if (note3.rose()) {
-//      if (currentEffect <= 1) {
-//        usbMIDI.sendNoteOn(50, velocity, currentChannel);
-//      } else if (currentEffect == 2) {
-//         sendRepeatedNote(50);
-//      }
-//    } else {
-//      usbMIDI.sendNoteOff(50, velocity, currentChannel);
-//    }
-//  }
+
+  if (note3.update()) {
+    if (note3.rose()) {
+      if (currentEffect <= 4) {
+        usbMIDI.sendNoteOn(50, velocity, currentChannel);
+      } else {
+         sendRepeatedNote(50);
+      }
+    } else {
+      usbMIDI.sendNoteOff(50, velocity, currentChannel);
+    }
+  }
 
   if (effectBounce.update()) {
     if (effectBounce.rose()) {
