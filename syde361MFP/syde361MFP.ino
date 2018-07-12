@@ -13,11 +13,10 @@ const byte repeatNotePin  = A2;
 const byte channelPin = A4;
 
 int currentChannel = 1;
-
-int velocity = 100;
-
 bool repeat = false;
 int repeatTimes = 5;
+
+int velocity = 100;
 
 Bounce note1 = Bounce(interruptPin1, 10);
 Bounce note2 = Bounce(interruptPin2, 10);
@@ -97,3 +96,4 @@ void toggleRepeat() {
     repeat = !repeat;
   }
 }
+
