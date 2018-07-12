@@ -1,3 +1,5 @@
+#include <Bounce2.h>
+
 int inputVoltage1 = 0;
 int inputVoltage2 = 0;
 int inputVoltage3 = 0;
@@ -15,16 +17,22 @@ int repeatTimes = 5;
 
 int velocity = 100;
 
+Bounce note1 = Bounce(interruptPin1, 10);
+Bounce note2 = Bounce(interruptPin2, 10);
+Bounce note3 = Bounce(interruptPin3, 10);
+
 void setup() {
   pinMode(channelPin, INPUT_PULLUP);
   pinMode(repeatNotePin, INPUT_PULLUP);
+
+  pinMode(interruptPin1, INPUT_PULLUP);
+  pinMode(interruptPin2, INPUT_PULLUP);
+  pinMode(interruptPin3, INPUT_PULLUP);
   
   Serial.begin(9600);
   
   attachInterrupt(digitalPinToInterrupt(channelPin), changeChannel, RISING);
   attachInterrupt(digitalPinToInterrupt(repeatNotePin), toggleRepeat, RISING);
-
-  
 }
 
 void sendNote(int midiNote) {
@@ -43,36 +51,41 @@ void sendRepeatedNote(int midiNote) {
   }
 }
 
-void loop() {
-  inputVoltage1 = analogRead(interruptPin1) * 0.0049;
-  inputVoltage2 = analogRead(interruptPin2) * 0.0049;
-  inputVoltage3 = analogRead(interruptPin3) * 0.0049;
-  
-  if (inputVoltage1 > 3) {
-    if (!repeat) {
-       sendNote(40);
+void loop() {  
+  if (note1.update()) {
+    if (note1.rose()) {
+      if (!repeat) {
+        usbMIDI.sendNoteOn(40, velocity, currentChannel);
+      } else {
+        sendRepeatedNote(40);
+      }
     } else {
-       sendRepeatedNote(40);
+      usbMIDI.sendNoteOff(40, velocity, currentChannel);
     }
-    inputVoltage1 = 0;
   }
 
-  if (inputVoltage2 > 3) {
-    if (!repeat) {
-       sendNote(45);
+  if (note2.update()) {
+    if (note2.rose()) {
+      if (!repeat) {
+        usbMIDI.sendNoteOn(45, velocity, currentChannel);
+      } else {
+         sendRepeatedNote(45);
+      }
     } else {
-       sendRepeatedNote(45);
+      usbMIDI.sendNoteOff(45, velocity, currentChannel);
     }
-    inputVoltage2 = 0;
   }
 
-  if (inputVoltage3 > 3) {
-    if (!repeat) {
-       sendNote(50);
+  if (note3.update()) {
+    if (note3.rose()) {
+      if (!repeat) {
+        usbMIDI.sendNoteOn(50, velocity, currentChannel);
+      } else {
+         sendRepeatedNote(50);
+      }
     } else {
-       sendRepeatedNote(50);
+      usbMIDI.sendNoteOff(50, velocity, currentChannel);
     }
-    inputVoltage3 = 0;
   }
 }
 
