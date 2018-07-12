@@ -8,8 +8,9 @@ const byte interruptPin1 = A8;
 const byte interruptPin2 = A5;
 const byte interruptPin3 = A7;
 
+const byte repeatNotePin  = A2;
+
 const byte channelPin = A4;
-const byte repeatNotePin = A2;
 
 int currentChannel = 1;
 bool repeat = false;
@@ -21,6 +22,8 @@ Bounce note1 = Bounce(interruptPin1, 10);
 Bounce note2 = Bounce(interruptPin2, 10);
 Bounce note3 = Bounce(interruptPin3, 10);
 
+Bounce channelCycleBounce = Bounce(channelPin, 10);
+
 void setup() {
   pinMode(channelPin, INPUT_PULLUP);
   pinMode(repeatNotePin, INPUT_PULLUP);
@@ -30,15 +33,8 @@ void setup() {
   pinMode(interruptPin3, INPUT_PULLUP);
   
   Serial.begin(9600);
-  
-  attachInterrupt(digitalPinToInterrupt(channelPin), changeChannel, RISING);
-  attachInterrupt(digitalPinToInterrupt(repeatNotePin), toggleRepeat, RISING);
-}
 
-void sendNote(int midiNote) {
-  usbMIDI.sendNoteOn(midiNote, velocity, currentChannel);
-  delay(100);
-  usbMIDI.sendNoteOff(midiNote, velocity, currentChannel);
+  attachInterrupt(digitalPinToInterrupt(repeatNotePin), toggleRepeat, RISING);
 }
 
 void sendRepeatedNote(int midiNote) {
@@ -87,13 +83,9 @@ void loop() {
       usbMIDI.sendNoteOff(50, velocity, currentChannel);
     }
   }
-}
 
-void changeChannel() {
-  int channelPinVoltage = analogRead(channelPin) * 0.0049;
-  
-  if (channelPinVoltage > 3) {
-    currentChannel = (currentChannel == 1) ? 2 : 1;
+  if (channelCycleBounce.update() && channelCycleBounce.rose()) {
+    (currentChannel < 3) ? currentChannel++ : currentChannel = 1;
   }
 }
 
