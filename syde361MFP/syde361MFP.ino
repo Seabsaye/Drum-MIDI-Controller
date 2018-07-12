@@ -22,6 +22,8 @@ Bounce note2 = Bounce(interruptPin2, 10);
 Bounce note3 = Bounce(interruptPin3, 10);
 Bounce effectBounce = Bounce(effectPin, 10);
 
+Bounce channelCycleBounce = Bounce(channelPin, 10);
+
 void setup() {
   pinMode(channelPin, INPUT_PULLUP);
   pinMode(effectPin, INPUT_PULLUP);
@@ -113,13 +115,9 @@ void loop() {
       }
     }
   }
-}
 
-void changeChannel() {
-  int channelPinVoltage = analogRead(channelPin) * 0.0049;
-  
-  if (channelPinVoltage > 3) {
-    currentChannel = (currentChannel == 1) ? 2 : 1;
+  if (channelCycleBounce.update() && channelCycleBounce.rose()) {
+    (currentChannel < 3) ? currentChannel++ : currentChannel = 1;
   }
 }
 
