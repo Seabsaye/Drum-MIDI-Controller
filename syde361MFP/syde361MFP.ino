@@ -159,8 +159,6 @@ void updateToggleRecordState() {
       inRecordMode[currentChannel - 1] = !inRecordMode[currentChannel - 1];
       if (inRecordMode[currentChannel - 1]) {
         digitalWrite(ledPin, HIGH);
-//        Serial.println(currentChannel);
-        Serial.println(haveRecording[currentChannel - 1]);
         usbMIDI.sendNoteOn((haveRecording[currentChannel - 1]) ? 3 : 1, velocity, currentChannel);
       } else {
         digitalWrite(ledPin, LOW);
@@ -211,25 +209,10 @@ void updateDeleteRecordingState() {
 }
 
 int location() {
-  Serial.println("New Hit!");
-  Serial.print("Top left: ");
-  Serial.println(topLeft);
-  Serial.print("Top right: ");
-  Serial.println(topRight);
-  Serial.print("Middle right: ");
-  Serial.println(middleRight);
-  Serial.print("Middle left: ");
-  Serial.println(middleLeft);
-  Serial.print("Bottom left: ");
-  Serial.println(bottomLeft);
-  Serial.print("Bottom right: ");
-  Serial.println(bottomRight);
   if (topLeft + topRight > bottomLeft + bottomRight + middleLeft + middleRight && (bottomLeft + middleLeft < 0.33 || topLeft > 0.7)) {
-    Serial.println("top");
-    return 0;
+    return 0; // hit was on top
   } else {
-    Serial.println("bottom");
-    return 1; 
+    return 1; // hit was on bottom
   }
 }
 
@@ -237,28 +220,16 @@ int strike(int location)
 {
   if (location == 0) {
     if ((topRight + topLeft > 0.72 && abs(topLeft-topRight)>0.35)||topLeft>0.56||topRight>0.56||(topLeft+topRight>1.1) || (abs(topLeft-topRight)>0.47 && (topRight>0.53||topLeft>0.53))){
-      Serial.println("Hard");
-      Serial.println("");
-      Serial.println("");
-      return 1;
+      return 1; // hard hit registered
     }
     else {
-      Serial.println("Soft");
-      Serial.println("");
-      Serial.println("");
-      return 0;
+      return 0; // soft hit registered
     }
   } else {
     if (topRight+topLeft+middleRight+middleLeft+bottomLeft+bottomRight>0.9){
-      Serial.println("Hard");
-      Serial.println("");
-      Serial.println("");
-      return 1;
+      return 1; // hard hit registered
     } else {
-      Serial.println("Soft");
-      Serial.println("");
-      Serial.println("");
-      return 0;
+      return 0; // soft hit registered
     }
   }
 }
