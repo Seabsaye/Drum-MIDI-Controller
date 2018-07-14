@@ -51,12 +51,12 @@ void loop() {
   if (note1.update()) {
     if (note1.rose()) {
       if (currentEffect[currentChannel] <= 4) {
-        usbMIDI.sendNoteOn(40, velocity, currentChannel);
+        usbMIDI.sendNoteOn(38, velocity, currentChannel);
       } else {
-        sendRepeatedNote(40);
+        sendRepeatedNote(38);
       }
     } else {
-      usbMIDI.sendNoteOff(40, velocity, currentChannel);
+      usbMIDI.sendNoteOff(38, velocity, currentChannel);
     }
   }
 
@@ -69,18 +69,6 @@ void loop() {
       }
     } else {
       usbMIDI.sendNoteOff(45, velocity, currentChannel);
-    }
-  }
-
-  if (note3.update()) {
-    if (note3.rose()) {
-      if (currentEffect[currentChannel] <= 4) {
-        usbMIDI.sendNoteOn(50, velocity, currentChannel);
-      } else {
-         sendRepeatedNote(50);
-      }
-    } else {
-      usbMIDI.sendNoteOff(50, velocity, currentChannel);
     }
   }
 
