@@ -9,21 +9,29 @@
  * 5 - clear command
  */
 
-int inputVoltage1 = 0;
-int inputVoltage2 = 0;
-int inputVoltage3 = 0;
+double bottomLeft;
+double bottomRight;
+double topLeft;
+double topRight;
+double middleLeft;
+double middleRight;
+int hitLocation; // 0 for top, 1 for bottom
+int hitHardness;  // 0 for soft note, 1 for hard note
 
-const byte interruptPin1 = A8;
-const byte interruptPin2 = A5;
-const byte interruptPin3 = A7;
-
-const byte channelPin = A4;
-const byte effectPin = A2;
-const byte clearEffectPin = A1;
+const byte topLeftPin = A0;
+const byte topRightPin = A1;
+const byte middleRightPin = A2;
+const byte middleLeftPin = A3;
+const byte bottomLeftPin = A4;
+const byte bottomRightPin = A6;
 
 const byte toggleRecordPin = A14;
 const byte togglePlaybackPin = A15;
 const byte deleteRecordingPin = A16;
+
+const byte channelPin = A17;
+const byte effectPin = A18;
+const byte clearEffectPin = A19;
 
 const int ledPin = 13;
 
@@ -31,18 +39,14 @@ int currentChannel = 1;
 int currentEffect[] = {1, 1, 1, 1};
 int repeatTimes = 3;
 
-int velocity = 100;
+int velocity;
 
 int inRecordMode[] = {0,0,0};
 int haveRecording[] = {0,0,0};
 int inPlaybackMode[] = {0,0,0};
 
-Bounce note1 = Bounce(interruptPin1, 10);
-Bounce note2 = Bounce(interruptPin2, 10);
-Bounce note3 = Bounce(interruptPin3, 10);
 Bounce effectBounce = Bounce(effectPin, 10);
 Bounce clearEffectBounce = Bounce(clearEffectPin, 10);
-
 Bounce channelCycleBounce = Bounce(channelPin, 10);
 
 Bounce toggleRecordBounce = Bounce(toggleRecordPin, 10);
@@ -52,10 +56,6 @@ Bounce deleteRecordingBounce = Bounce(deleteRecordingPin, 10);
 void setup() {
   pinMode(channelPin, INPUT_PULLUP);
   pinMode(effectPin, INPUT_PULLUP);
-
-  pinMode(interruptPin1, INPUT_PULLUP);
-  pinMode(interruptPin2, INPUT_PULLUP);
-  pinMode(interruptPin3, INPUT_PULLUP);
 
   pinMode(toggleRecordPin, INPUT_PULLUP);
   pinMode(togglePlaybackPin, INPUT_PULLUP);
@@ -78,27 +78,34 @@ void sendRepeatedNote(int midiNote) {
 }
 
 void loop() {  
-  if (note1.update()) {
-    if (note1.rose()) {
+  topLeft = analogRead(topLeftPin) * 0.0049;
+  topRight = analogRead(topRightPin) * 0.0049;
+  middleRight = analogRead(middleRightPin) * 0.0049;
+  middleLeft = analogRead(middleLeftPin) * 0.0049;
+  bottomLeft = analogRead(bottomLeftPin) * 0.0049;
+  bottomRight = analogRead(bottomRightPin) * 0.0049;
+     
+  if (bottomLeft>0.3|| bottomRight>0.3 || topLeft>0.5|| topRight>0.5 || middleLeft>0.5|| middleRight>0.5) {
+    hitLocation = location();
+    hitHardness = strike(hitLocation);
+    velocity = hitHardness == 0 ? 50 : 100;
+    
+    if (hitLocation == 0) {
       if (currentEffect[currentChannel] <= 4) {
         usbMIDI.sendNoteOn(38, velocity, currentChannel);
+        delay(150);
+        usbMIDI.sendNoteOff(38, velocity, currentChannel);
       } else {
         sendRepeatedNote(38);
       }
     } else {
-      usbMIDI.sendNoteOff(38, velocity, currentChannel);
-    }
-  }
-
-  if (note2.update()) {
-    if (note2.rose()) {
       if (currentEffect[currentChannel] <= 4) {
         usbMIDI.sendNoteOn(45, velocity, currentChannel);
+        delay(150);
+        usbMIDI.sendNoteOff(45, velocity, currentChannel);
       } else {
-         sendRepeatedNote(45);
+        sendRepeatedNote(45);
       }
-    } else {
-      usbMIDI.sendNoteOff(45, velocity, currentChannel);
     }
   }
 
@@ -152,6 +159,8 @@ void updateToggleRecordState() {
       inRecordMode[currentChannel - 1] = !inRecordMode[currentChannel - 1];
       if (inRecordMode[currentChannel - 1]) {
         digitalWrite(ledPin, HIGH);
+//        Serial.println(currentChannel);
+        Serial.println(haveRecording[currentChannel - 1]);
         usbMIDI.sendNoteOn((haveRecording[currentChannel - 1]) ? 3 : 1, velocity, currentChannel);
       } else {
         digitalWrite(ledPin, LOW);
@@ -197,6 +206,59 @@ void updateDeleteRecordingState() {
     } else {
       usbMIDI.sendNoteOff(4, velocity, currentChannel);
       usbMIDI.sendNoteOff(5 , velocity, currentChannel);
+    }
+  }
+}
+
+int location() {
+  Serial.println("New Hit!");
+  Serial.print("Top left: ");
+  Serial.println(topLeft);
+  Serial.print("Top right: ");
+  Serial.println(topRight);
+  Serial.print("Middle right: ");
+  Serial.println(middleRight);
+  Serial.print("Middle left: ");
+  Serial.println(middleLeft);
+  Serial.print("Bottom left: ");
+  Serial.println(bottomLeft);
+  Serial.print("Bottom right: ");
+  Serial.println(bottomRight);
+  if (topLeft + topRight > bottomLeft + bottomRight + middleLeft + middleRight && (bottomLeft + middleLeft < 0.33 || topLeft > 0.7)) {
+    Serial.println("top");
+    return 0;
+  } else {
+    Serial.println("bottom");
+    return 1; 
+  }
+}
+
+int strike(int location)
+{
+  if (location == 0) {
+    if ((topRight + topLeft > 0.72 && abs(topLeft-topRight)>0.35)||topLeft>0.56||topRight>0.56||(topLeft+topRight>1.1) || (abs(topLeft-topRight)>0.47 && (topRight>0.53||topLeft>0.53))){
+      Serial.println("Hard");
+      Serial.println("");
+      Serial.println("");
+      return 1;
+    }
+    else {
+      Serial.println("Soft");
+      Serial.println("");
+      Serial.println("");
+      return 0;
+    }
+  } else {
+    if (topRight+topLeft+middleRight+middleLeft+bottomLeft+bottomRight>0.9){
+      Serial.println("Hard");
+      Serial.println("");
+      Serial.println("");
+      return 1;
+    } else {
+      Serial.println("Soft");
+      Serial.println("");
+      Serial.println("");
+      return 0;
     }
   }
 }
