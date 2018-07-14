@@ -100,7 +100,8 @@ void loop() {
 
   // If clear effect button pressed, clear effect on current channel
   if (clearEffectBounce.update() && clearEffectBounce.rose()) {
-    currentEffect[currentChannel] = 1;
+    usbMIDI.sendControlChange(currentEffect + 1, 25, currentChannel);
+    currentEffect[currentChannel] = 0;
   }
 
   if (channelCycleBounce.update() && channelCycleBounce.rose()) {
