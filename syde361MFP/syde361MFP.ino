@@ -72,18 +72,6 @@ void loop() {
     }
   }
 
-  if (note3.update()) {
-    if (note3.rose()) {
-      if (currentEffect[currentChannel] <= 4) {
-        usbMIDI.sendNoteOn(50, velocity, currentChannel);
-      } else {
-         sendRepeatedNote(50);
-      }
-    } else {
-      usbMIDI.sendNoteOff(50, velocity, currentChannel);
-    }
-  }
-
   if (effectBounce.update() && effectBounce.rose()) {
     if (currentEffect[currentChannel] == 0) {
       currentEffect[currentChannel] = 1;
