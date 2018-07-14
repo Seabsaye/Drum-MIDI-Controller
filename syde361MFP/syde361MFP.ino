@@ -37,6 +37,7 @@ void setup() {
   Serial.begin(9600);
 }
 
+// Function to create the repeated note effect
 void sendRepeatedNote(int midiNote) {
   int i = 0;
   while (i < repeatTimes) {
@@ -72,6 +73,7 @@ void loop() {
     }
   }
 
+  // If toggle effect button pressed, send control changes to change the effects in Ableton
   if (effectBounce.update() && effectBounce.rose()) {
     if (currentEffect[currentChannel] == 0) {
       currentEffect[currentChannel] = 1;
@@ -96,6 +98,7 @@ void loop() {
     }
   }
 
+  // If clear effect button pressed, clear effect on current channel
   if (clearEffectBounce.update() && clearEffectBounce.rose()) {
     currentEffect[currentChannel] = 1;
   }
