@@ -17,8 +17,9 @@ const byte interruptPin1 = A8;
 const byte interruptPin2 = A5;
 const byte interruptPin3 = A7;
 
-const byte repeatNotePin  = A2;
 const byte channelPin = A4;
+const byte effectPin = A2;
+const byte clearEffectPin = A1;
 
 const byte toggleRecordPin = A14;
 const byte togglePlaybackPin = A15;
@@ -27,8 +28,8 @@ const byte deleteRecordingPin = A16;
 const int ledPin = 13;
 
 int currentChannel = 1;
-bool repeat = false;
-int repeatTimes = 5;
+int currentEffect[] = {1, 1, 1, 1};
+int repeatTimes = 3;
 
 int velocity = 100;
 
@@ -39,6 +40,8 @@ int inPlaybackMode[] = {0,0,0};
 Bounce note1 = Bounce(interruptPin1, 10);
 Bounce note2 = Bounce(interruptPin2, 10);
 Bounce note3 = Bounce(interruptPin3, 10);
+Bounce effectBounce = Bounce(effectPin, 10);
+Bounce clearEffectBounce = Bounce(clearEffectPin, 10);
 
 Bounce channelCycleBounce = Bounce(channelPin, 10);
 
@@ -48,7 +51,7 @@ Bounce deleteRecordingBounce = Bounce(deleteRecordingPin, 10);
 
 void setup() {
   pinMode(channelPin, INPUT_PULLUP);
-  pinMode(repeatNotePin, INPUT_PULLUP);
+  pinMode(effectPin, INPUT_PULLUP);
 
   pinMode(interruptPin1, INPUT_PULLUP);
   pinMode(interruptPin2, INPUT_PULLUP);
@@ -61,10 +64,9 @@ void setup() {
   pinMode(ledPin, OUTPUT);
   
   Serial.begin(9600);
-
-  attachInterrupt(digitalPinToInterrupt(repeatNotePin), toggleRepeat, RISING);
 }
 
+// Function to create the repeated note effect
 void sendRepeatedNote(int midiNote) {
   int i = 0;
   while (i < repeatTimes) {
@@ -78,19 +80,19 @@ void sendRepeatedNote(int midiNote) {
 void loop() {  
   if (note1.update()) {
     if (note1.rose()) {
-      if (!repeat) {
-        usbMIDI.sendNoteOn(40, velocity, currentChannel);
+      if (currentEffect[currentChannel] <= 4) {
+        usbMIDI.sendNoteOn(38, velocity, currentChannel);
       } else {
-        sendRepeatedNote(40);
+        sendRepeatedNote(38);
       }
     } else {
-      usbMIDI.sendNoteOff(40, velocity, currentChannel);
+      usbMIDI.sendNoteOff(38, velocity, currentChannel);
     }
   }
 
   if (note2.update()) {
     if (note2.rose()) {
-      if (!repeat) {
+      if (currentEffect[currentChannel] <= 4) {
         usbMIDI.sendNoteOn(45, velocity, currentChannel);
       } else {
          sendRepeatedNote(45);
@@ -100,18 +102,31 @@ void loop() {
     }
   }
 
-  if (note3.update()) {
-    if (note3.rose()) {
-      if (!repeat) {
-        usbMIDI.sendNoteOn(50, velocity, currentChannel);
-      } else {
-         sendRepeatedNote(50);
-      }
+  // If toggle effect button pressed, send control changes to change the effects in Ableton
+  if (effectBounce.update() && effectBounce.rose()) {
+    if (currentEffect[currentChannel] == 0) {
+      currentEffect[currentChannel] = 1;
+      usbMIDI.sendControlChange(2, 100, currentChannel);
+    } else if (currentEffect[currentChannel] == 1) {
+      currentEffect[currentChannel] = 2;
+      usbMIDI.sendControlChange(2, 25, currentChannel);
+      usbMIDI.sendControlChange(3, 100, currentChannel);
+    } else if (currentEffect[currentChannel] == 2) {
+      currentEffect[currentChannel] = 3;
+      usbMIDI.sendControlChange(3, 25, currentChannel);
+      usbMIDI.sendControlChange(4, 100, currentChannel);
+    } else if (currentEffect[currentChannel] == 3) {
+      currentEffect[currentChannel] = 4;
+      usbMIDI.sendControlChange(4, 25, currentChannel);
+      usbMIDI.sendControlChange(5, 100, currentChannel);
+    } else if (currentEffect[currentChannel] == 4){
+      currentEffect[currentChannel] = 5;
+      usbMIDI.sendControlChange(5, 25, currentChannel);
     } else {
-      usbMIDI.sendNoteOff(50, velocity, currentChannel);
+      currentEffect[currentChannel] = 0;
     }
   }
-
+  
   updateChannelState();
   
   updateToggleRecordState();
@@ -183,14 +198,6 @@ void updateDeleteRecordingState() {
       usbMIDI.sendNoteOff(4, velocity, currentChannel);
       usbMIDI.sendNoteOff(5 , velocity, currentChannel);
     }
-  }
-}
-
-void toggleRepeat() {
-  int repeatPinVoltage = analogRead(repeatNotePin) * 0.0049;
-
-  if (repeatPinVoltage > 3) {
-    repeat = !repeat;
   }
 }
 
