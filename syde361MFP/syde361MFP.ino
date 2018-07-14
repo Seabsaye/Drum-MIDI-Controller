@@ -51,12 +51,12 @@ void loop() {
   if (note1.update()) {
     if (note1.rose()) {
       if (currentEffect[currentChannel] <= 4) {
-        usbMIDI.sendNoteOn(40, velocity, currentChannel);
+        usbMIDI.sendNoteOn(38, velocity, currentChannel);
       } else {
-        sendRepeatedNote(40);
+        sendRepeatedNote(38);
       }
     } else {
-      usbMIDI.sendNoteOff(40, velocity, currentChannel);
+      usbMIDI.sendNoteOff(38, velocity, currentChannel);
     }
   }
 
