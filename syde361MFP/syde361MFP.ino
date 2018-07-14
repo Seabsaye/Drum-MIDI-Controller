@@ -48,6 +48,12 @@ void sendRepeatedNote(int midiNote) {
   }
 }
 
+void switchEffect(int effect, int offValue, int onValue) {
+   currentEffect[currentChannel] = effect;
+   usbMIDI.sendControlChange(effect, offValue, currentChannel);
+   usbMIDI.sendControlChange(effect + 1, onValue, currentChannel);
+}
+
 void loop() {  
   if (note1.update()) {
     if (note1.rose()) {
@@ -76,20 +82,13 @@ void loop() {
   // If toggle effect button pressed, send control changes to change the effects in Ableton
   if (effectBounce.update() && effectBounce.rose()) {
     if (currentEffect[currentChannel] == 0) {
-      currentEffect[currentChannel] = 1;
-      usbMIDI.sendControlChange(2, 100, currentChannel);
+      switchEffect(1, 25, 100);
     } else if (currentEffect[currentChannel] == 1) {
-      currentEffect[currentChannel] = 2;
-      usbMIDI.sendControlChange(2, 25, currentChannel);
-      usbMIDI.sendControlChange(3, 100, currentChannel);
+      switchEffect(2, 25, 100);
     } else if (currentEffect[currentChannel] == 2) {
-      currentEffect[currentChannel] = 3;
-      usbMIDI.sendControlChange(3, 25, currentChannel);
-      usbMIDI.sendControlChange(4, 100, currentChannel);
+      switchEffect(3, 25, 100);
     } else if (currentEffect[currentChannel] == 3) {
-      currentEffect[currentChannel] = 4;
-      usbMIDI.sendControlChange(4, 25, currentChannel);
-      usbMIDI.sendControlChange(5, 100, currentChannel);
+      switchEffect(4, 25, 100);
     } else if (currentEffect[currentChannel] == 4){
       currentEffect[currentChannel] = 5;
       usbMIDI.sendControlChange(5, 25, currentChannel);
@@ -100,7 +99,7 @@ void loop() {
 
   // If clear effect button pressed, clear effect on current channel
   if (clearEffectBounce.update() && clearEffectBounce.rose()) {
-    usbMIDI.sendControlChange(currentEffect + 1, 25, currentChannel);
+    usbMIDI.sendControlChange(*currentEffect + 1, 25, currentChannel);
     currentEffect[currentChannel] = 0;
   }
 
