@@ -9,6 +9,12 @@
  * 5 - clear command
  */
 
+const int RECORD_MIDI_NOTE = 1;
+const int START_PLAYBACK_MIDI_NOTE = 2;
+const int OVERDUB_MIDI_NOTE = 3;
+const int STOP_PLAYBACK_MIDI_NOTE = 4;
+const int CLEAR_RECORD_MIDI_NOTE = 5;
+
 double bottomLeft;
 double bottomRight;
 double topLeft;
@@ -162,67 +168,75 @@ void loop() {
   usbMIDI.read();
 }
 
+// Returns an int indicating whether Ableton Live is in overdub mode or not
 int inOverdubMode() {
   return (currentChannel >= 1) ? (haveRecording[currentChannel - 1] && inRecordMode[currentChannel - 1]) : 0;
 }
 
+// Updates the current channel used in Ableton Live if the associated button is pressed
+// Channels range from 1-3
 void updateChannelState() {
   if (channelCycleBounce.update() && channelCycleBounce.rose()) {
     (currentChannel < 3) ? currentChannel++ : currentChannel = 1;
   }
 }
 
+// Toggles recording in either regular (MIDI note 1) or overdub (MIDI note 3) modes
+// for a given channel and turns on an LED for the recording state
 void updateToggleRecordState() {
   if (toggleRecordBounce.update()) {
     if (toggleRecordBounce.rose()) {
       inRecordMode[currentChannel - 1] = !inRecordMode[currentChannel - 1];
       if (inRecordMode[currentChannel - 1]) {
         digitalWrite(ledPin, HIGH);
-        usbMIDI.sendNoteOn((haveRecording[currentChannel - 1]) ? 3 : 1, velocity, currentChannel);
+        usbMIDI.sendNoteOn((haveRecording[currentChannel - 1]) ? OVERDUB_MIDI_NOTE : RECORD_MIDI_NOTE, velocity, currentChannel);
       } else {
         digitalWrite(ledPin, LOW);
         haveRecording[currentChannel - 1] = 1;
         inPlaybackMode[currentChannel - 1] = 1;
-        usbMIDI.sendNoteOn(2, velocity, currentChannel);
+        usbMIDI.sendNoteOn(START_PLAYBACK_MIDI_NOTE, velocity, currentChannel);
       }
     } else {
-      usbMIDI.sendNoteOff(1, velocity, currentChannel);
-      usbMIDI.sendNoteOff(2, velocity, currentChannel);
-      usbMIDI.sendNoteOff(3, velocity, currentChannel);
+      usbMIDI.sendNoteOff(RECORD_MIDI_NOTE, velocity, currentChannel);
+      usbMIDI.sendNoteOff(START_PLAYBACK_MIDI_NOTE, velocity, currentChannel);
+      usbMIDI.sendNoteOff(OVERDUB_MIDI_NOTE, velocity, currentChannel);
     }
   }
 }
 
+// Toggles playback of a recording for a given channel
 void updateTogglePlaybackState() {
   if (togglePlaybackBounce.update()) {
-    //only do something if there is a recording on the current channel
+    // Only do something if there is a recording on the current channel
     if (haveRecording[currentChannel - 1]) {
       if (togglePlaybackBounce.rose()) {
-        usbMIDI.sendNoteOn(inPlaybackMode[currentChannel - 1] ? 4 : 2, velocity, currentChannel);
+        usbMIDI.sendNoteOn(inPlaybackMode[currentChannel - 1] ? STOP_PLAYBACK_MIDI_NOTE : START_PLAYBACK_MIDI_NOTE, velocity, currentChannel);
         inPlaybackMode[currentChannel - 1] = !inPlaybackMode[currentChannel - 1];        
       } else {
-        usbMIDI.sendNoteOff(4, velocity, currentChannel);
-        usbMIDI.sendNoteOff(2, velocity, currentChannel);
+        usbMIDI.sendNoteOff(STOP_PLAYBACK_MIDI_NOTE, velocity, currentChannel);
+        usbMIDI.sendNoteOff(START_PLAYBACK_MIDI_NOTE, velocity, currentChannel);
       } 
     }
   }
 }
 
+
+// Deletes a recording for a given channel and clears all of the channel's information
 void updateDeleteRecordingState() {
   if (deleteRecordingBounce.update()) {
     if (deleteRecordingBounce.rose()) {
       digitalWrite(ledPin, LOW);
       if (inOverdubMode()) {
-        //send a MIDI command to get out of the overdub mode
-        usbMIDI.sendNoteOn(4, velocity, currentChannel);
+        // Send a MIDI command to exit the overdub mode
+        usbMIDI.sendNoteOn(STOP_PLAYBACK_MIDI_NOTE, velocity, currentChannel);
       }
-      usbMIDI.sendNoteOn(5, velocity, currentChannel);
+      usbMIDI.sendNoteOn(CLEAR_RECORD_MIDI_NOTE, velocity, currentChannel);
       haveRecording[currentChannel - 1] = 0;
       inRecordMode[currentChannel - 1] = 0;
       inPlaybackMode[currentChannel - 1] = 0;
     } else {
-      usbMIDI.sendNoteOff(4, velocity, currentChannel);
-      usbMIDI.sendNoteOff(5 , velocity, currentChannel);
+      usbMIDI.sendNoteOff(STOP_PLAYBACK_MIDI_NOTE, velocity, currentChannel);
+      usbMIDI.sendNoteOff(CLEAR_RECORD_MIDI_NOTE , velocity, currentChannel);
     }
   }
 }
