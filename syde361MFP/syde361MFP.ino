@@ -84,6 +84,7 @@ void sendRepeatedNote(int midiNote) {
   }
 }
 
+// Send a control change to toggle an effect on and another off
 void sendChangeEffect(int effect, int offValue, int onValue) {
   currentEffect[currentChannel] = effect;
   usbMIDI.sendControlChange(effect, offValue, currentChannel);
@@ -97,12 +98,15 @@ void loop() {
   middleLeft = analogRead(middleLeftPin) * 0.0049;
   bottomLeft = analogRead(bottomLeftPin) * 0.0049;
   bottomRight = analogRead(bottomRightPin) * 0.0049;
-     
+
+  // Polling to sense a strike on the drum surface, the voltage changes are too small to be sensed by Bounce
   if (bottomLeft>0.3|| bottomRight>0.3 || topLeft>0.5|| topRight>0.5 || middleLeft>0.5|| middleRight>0.5) {
+    // Calculate strike location and velocity
     hitLocation = location();
     hitHardness = strike(hitLocation);
     velocity = hitHardness == 0 ? 50 : 100;
-    
+
+    // Play note based on strike location and velocity
     if (hitLocation == 0) {
       if (currentEffect[currentChannel] <= 4) {
         usbMIDI.sendNoteOn(38, velocity, currentChannel);
@@ -150,6 +154,7 @@ void loop() {
     } 
   }
 
+  // Clear all effects on the current channel
   if (clearEffectBounce.update() && clearEffectBounce.rose()) {
     if (currentChannel == 2) {
       usbMIDI.sendControlChange(4, 0, currentChannel);
@@ -241,6 +246,7 @@ void updateDeleteRecordingState() {
   }
 }
 
+// Calculates the location of a strike
 int location() {
   if (topLeft + topRight > bottomLeft + bottomRight + middleLeft + middleRight && (bottomLeft + middleLeft < 0.33 || topLeft > 0.7)) {
     return 0; // hit was on top
@@ -249,6 +255,7 @@ int location() {
   }
 }
 
+// Calculates the harness of a strike
 int strike(int location)
 {
   if (location == 0) {
